@@ -1,0 +1,254 @@
+K=kernel
+U=user
+T=target
+OPENSBI=fw_jump.elf
+RUSTSBI=sbi-qemu
+platform=qemu
+
+OBJS = \
+  $K/entry.o  \
+  $K/printf.o \
+  $K/kalloc.o \
+  $K/intr.o \
+  $K/spinlock.o \
+  $K/string.o \
+  $K/main.o \
+  $K/vm.o \
+  $K/proc.o \
+  $K/swtch.o \
+  $K/trampoline.o \
+  $K/trap.o \
+  $K/syscall.o \
+  $K/sysproc.o \
+  $K/bio.o \
+  $K/sleeplock.o \
+  $K/file.o \
+  $K/pipe.o \
+  $K/exec.o \
+  $K/sysfile.o \
+  $K/kernelvec.o \
+  $K/timer.o \
+  $K/virtio_disk.o \
+  $K/disk.o \
+  $K/fat32.o \
+  $K/plic.o \
+  $K/console.o \
+#  $K/spi.o \
+#  $K/gpiohs.o \
+#  $K/fpioa.o \
+#  $K/utils.o \
+#  $K/sdcard.o \
+#  $K/dmac.o \
+#  $K/sysctl.o \elf- or riscv64-linux-gnu-
+
+# riscv64-unknown-
+
+# perhaps in /opt/riscv/bin
+#TOOLPREFIX = 
+
+# Try to infer the correct TOOLPREFIX if not set
+ifndef TOOLPREFIX
+TOOLPREFIX := $(shell if riscv64-unknown-elf-objdump -i 2>&1 | grep 'elf64-big' >/dev/null 2>&1; \
+	then echo 'riscv64-unknown-elf-'; \
+	elif riscv64-linux-gnu-objdump -i 2>&1 | grep 'elf64-big' >/dev/null 2>&1; \
+	then echo 'riscv64-linux-gnu-'; \
+	elif riscv64-unknown-linux-gnu-objdump -i 2>&1 | grep 'elf64-big' >/dev/null 2>&1; \
+	then echo 'riscv64-unknown-linux-gnu-'; \
+	else echo "***" 1>&2; \
+	echo "*** Error: Couldn't find a riscv64 version of GCC/binutils." 1>&2; \
+	echo "*** To turn off this error, run 'gmake TOOLPREFIX= ...'." 1>&2; \
+	echo "***" 1>&2; exit 1; fi)
+endif
+
+QEMU = qemu-system-riscv64
+
+PY = python3
+CC = $(TOOLPREFIX)gcc
+AS = $(TOOLPREFIX)gas
+LD = $(TOOLPREFIX)ld
+OBJCOPY = $(TOOLPREFIX)objcopy
+OBJDUMP = $(TOOLPREFIX)objdump
+
+CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb
+CFLAGS += -MD
+CFLAGS += -mcmodel=medany
+CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
+CFLAGS += -I.
+CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
+
+# Disable PIE when possible (for Ubuntu 16.10 toolchain)
+ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]no-pie'),)
+CFLAGS += -fno-pie -no-pie
+endif
+ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
+CFLAGS += -fno-pie -nopie
+endif
+
+LDFLAGS = -z max-page-size=4096
+	
+OBJS += $K/link_app.o
+
+$K/kernel: $(OBJS) $K/kernel_app.ld $U/initcode
+	@$(LD) $(LDFLAGS) -T $K/kernel_app.ld -o $K/kernel $(OBJS)
+	@$(OBJDUMP) -S $K/kernel > $K/kernel.asm
+	@$(OBJDUMP) -t $K/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $K/kernel.sym
+	riscv64-unknown-elf-objdump -d ./kernel/kernel > ./kernel/kernel.txt
+	
+$U/initcode: $U/initcode.S
+	$(CC) $(CFLAGS) -march=rv64g -nostdinc -I. -Ikernel -c $U/initcode.S -o $U/initcode.o
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $U/initcode.out $U/initcode.o
+	$(OBJCOPY) -S -O binary $U/initcode.out $U/initcode
+	$(OBJDUMP) -S $U/initcode.o > $U/initcode.asm
+
+tags: $(OBJS) _init
+	etags *.S *.c
+
+ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o
+
+_%: %.o $(ULIB)
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
+	$(OBJDUMP) -S $@ > $*.asm
+	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
+
+$U/usys.S : $U/usys.pl
+	perl $U/usys.pl > $U/usys.S
+
+$U/usys.o : $U/usys.S
+	$(CC) $(CFLAGS) -c -o $U/usys.o $U/usys.S
+
+$U/_forktest: $U/forktest.o $(ULIB)
+	# forktest has less library code linked in - needs to be small
+	# in order to be able to max out the proc table.
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_forktest $U/forktest.o $U/ulib.o $U/usys.o
+	$(OBJDUMP) -S $U/_forktest > $U/forktest.asm
+
+
+
+# Prevent deletion of intermediate files, e.g. cat.o, after first build, so
+# that disk image changes after first build are persistent until clean.  More
+# details:
+# http://www.gnu.org/software/make/manual/html_node/Chained-Rules.html
+.PRECIOUS: %.o
+
+UPROGS=\
+	$U/_init\
+	$U/_sh\
+	$U/_cat\
+	$U/_echo\
+	$U/_grep\
+	$U/_ls\
+	$U/_kill\
+	$U/_mkdir\
+	$U/_xargs\
+	$U/_sleep\
+	$U/_find\
+	$U/_rm\
+	$U/_wc\
+	$U/_test\
+	$U/_usertests\
+	$U/_strace\
+	$U/_mv\
+
+TPROGS=\
+	$T/_init\
+	$T/_sh\
+	$T/_cat\
+	$T/_echo\
+	$T/_grep\
+	$T/_ls\
+	$T/_kill\
+	$T/_mkdir\
+	$T/_xargs\
+	$T/_sleep\
+	$T/_find\
+	$T/_rm\
+	$T/_wc\
+	$T/_test\
+	$T/_usertests\
+	$T/_strace\
+	$T/_mv\
+
+dst=/mnt
+
+target/_%:$U/_%
+	mv $U/_$* $T/_$*
+
+kernel/link_app.S: scripts/pack.py  $(TPROGS)
+	@$(PY) scripts/pack.py
+kernel/kernel_app.ld: scripts/kernelld.py $(TPROGS)
+	@$(PY) scripts/kernelld.py
+
+fs.img: $(UPROGS)
+	@if [ ! -f "fs.img" ]; then \
+		echo "making fs image..."; \
+		dd if=/dev/zero of=fs.img bs=512k count=512; \
+		mkfs.vfat -F 32 fs.img; fi
+	@sudo mount fs.img $(dst)
+	@if [ ! -d "$(dst)/bin" ]; then sudo mkdir $(dst)/bin; fi
+	@sudo cp README $(dst)/README
+	@for file in $$( ls $U/_* ); do \
+		sudo cp $$file $(dst)/$${file#$U/_};\
+		sudo cp $$file $(dst)/bin/$${file#$U/_}; done
+	@sudo umount $(dst)
+
+-include kernel/*.d user/*.d
+
+clean: 
+	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
+	*/*.o */*.d */*.asm */*.sym */*.txt\
+	$U/initcode $U/initcode.out $K/kernel \
+	$K/kernel_app.ld $K/kernel_app.S \
+	mkfs/mkfs .gdbinit \
+        $U/usys.S \
+	$(UPROGS) $(TPROGS)
+
+# try to generate a unique GDB port
+GDBPORT = $(shell expr `id -u` % 5000 + 25000)
+# QEMU's gdb stub command line changed in 0.11
+QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
+	then echo "-gdb tcp::$(GDBPORT)"; \
+	else echo "-s -p $(GDBPORT)"; fi)
+ifndef CPUS
+CPUS := 5
+endif
+
+
+ifndef M
+M = virt
+endif
+
+QEMUOPTS_RUST = -machine $(M) -bios $(RUSTSBI) -kernel $K/kernel -smp $(CPUS) -nographic
+QEMUOPTS_RUST += -drive file=fs.img,if=none,format=raw,id=x0
+QEMUOPTS_RUST += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
+
+QEMUOPTS_OPEN = -machine $(M) -bios $(OPENSBI) -kernel $K/kernel -smp $(CPUS) -nographic
+QEMUOPTS_OPEN += -initrd fs.img
+
+ifeq ($(M), virt)
+QEMUOPTS_OPEN += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
+endif
+
+qemu-o: $K/kernel fs.img
+	$(QEMU) $(QEMUOPTS_OPEN)
+
+qemu-r: $K/kernel fs.img
+	$(QEMU) $(QEMUOPTS_RUST)
+
+.gdbinit: .gdbinit.tmpl-riscv
+	sed "s/:1234/:$(GDBPORT)/" < $^ > $@
+
+qemu-o-gdb: $K/kernel .gdbinit fs.img
+	@echo "*** Now run 'gdb' in another window." 1>&2
+	$(QEMU) $(QEMUOPTS_OPEN) -S $(QEMUGDB)
+
+qemu-o-gdb-c: $K/kernel .gdbinit fs.img
+	@echo "*** Now run 'gdb' in another window." 1>&2
+	$(QEMU) $(QEMUOPTS_OPEN) $(QEMUGDB)
+
+qemu-r-gdb: $K/kernel .gdbinit fs.img
+	@echo "*** Now run 'gdb' in another window." 1>&2
+	$(QEMU) $(QEMUOPTS_RUST) -S $(QEMUGDB)
+
+qemu-r-gdb-c: $K/kernel .gdbinit fs.img
+	@echo "*** Now run 'gdb' in another window." 1>&2
+	$(QEMU) $(QEMUOPTS_RUST) $(QEMUGDB)
