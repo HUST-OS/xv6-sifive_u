@@ -185,8 +185,9 @@ kerneltrap() {
 //          0 if not recognized. 
 int devintr(void) {
 	uint64 scause = r_scause();
+	//printf("scause:%x\n",scause);
 
-	#ifdef QEMU 
+	#if QEMU==SIFIVE_U 
 	// handle external interrupt 
 	if ((0x8000000000000000L & scause) && 9 == (scause & 0xff)) 
 	#else 
@@ -197,7 +198,9 @@ int devintr(void) {
 	#endif 
 	{
 		int irq = plic_claim();
+		
 		if (UART_IRQ == irq) {
+			printf("cao\n");
 			// keyboard input 
 			int c = sbi_console_getchar();
 			if (-1 != c) {

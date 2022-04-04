@@ -43,7 +43,6 @@ main(unsigned long hartid, unsigned long dtb_pa)
     #ifdef DEBUG
     printf("hart %d enter main()...\n", hartid);
     #endif
-
     kinit();         // physical page allocator
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging
@@ -85,8 +84,6 @@ main(unsigned long hartid, unsigned long dtb_pa)
     trapinithart();
     plicinithart();  // ask PLIC for device interrupts
   }
-
-
-  printf("hart %d Bye...\n", hartid);
+  printf("hart %d scheduler...\n", hartid);
   scheduler();
 }

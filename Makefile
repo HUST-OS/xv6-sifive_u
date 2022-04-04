@@ -28,6 +28,8 @@ OBJS = \
   $K/sysfile.o \
   $K/kernelvec.o \
   $K/timer.o \
+  $K/link_app.o \
+  $K/ramdisk.o \
   $K/virtio_disk.o \
   $K/disk.o \
   $K/fat32.o \
@@ -86,9 +88,9 @@ endif
 
 LDFLAGS = -z max-page-size=4096
 	
-OBJS += $K/link_app.o
+$K/link_app.o:fs.img
 
-$K/kernel: $(OBJS) $K/kernel_app.ld $U/initcode
+$K/kernel: $(OBJS) $K/kernel_app.ld $U/initcode 
 	@$(LD) $(LDFLAGS) -T $K/kernel_app.ld -o $K/kernel $(OBJS)
 	@$(OBJDUMP) -S $K/kernel > $K/kernel.asm
 	@$(OBJDUMP) -t $K/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $K/kernel.sym
@@ -149,39 +151,13 @@ UPROGS=\
 	$U/_strace\
 	$U/_mv\
 
-TPROGS=\
-	$T/_init\
-	$T/_sh\
-	$T/_cat\
-	$T/_echo\
-	$T/_grep\
-	$T/_ls\
-	$T/_kill\
-	$T/_mkdir\
-	$T/_xargs\
-	$T/_sleep\
-	$T/_find\
-	$T/_rm\
-	$T/_wc\
-	$T/_test\
-	$T/_usertests\
-	$T/_strace\
-	$T/_mv\
-
 dst=/mnt
 
-target/_%:$U/_%
-	mv $U/_$* $T/_$*
-
-kernel/link_app.S: scripts/pack.py  $(TPROGS)
-	@$(PY) scripts/pack.py
-kernel/kernel_app.ld: scripts/kernelld.py $(TPROGS)
-	@$(PY) scripts/kernelld.py
 
 fs.img: $(UPROGS)
 	@if [ ! -f "fs.img" ]; then \
 		echo "making fs image..."; \
-		dd if=/dev/zero of=fs.img bs=512k count=512; \
+		dd if=/dev/zero of=fs.img bs=512k count=4; \
 		mkfs.vfat -F 32 fs.img; fi
 	@sudo mount fs.img $(dst)
 	@if [ ! -d "$(dst)/bin" ]; then sudo mkdir $(dst)/bin; fi
@@ -197,8 +173,7 @@ clean:
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*/*.o */*.d */*.asm */*.sym */*.txt\
 	$U/initcode $U/initcode.out $K/kernel \
-	$K/kernel_app.ld $K/kernel_app.S \
-	mkfs/mkfs .gdbinit \
+	mkfs/mkfs .gdbinit fs.img\
         $U/usys.S \
 	$(UPROGS) $(TPROGS)
 
@@ -222,7 +197,6 @@ QEMUOPTS_RUST += -drive file=fs.img,if=none,format=raw,id=x0
 QEMUOPTS_RUST += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
 QEMUOPTS_OPEN = -machine $(M) -bios $(OPENSBI) -kernel $K/kernel -smp $(CPUS) -nographic
-QEMUOPTS_OPEN += -initrd fs.img
 
 ifeq ($(M), virt)
 QEMUOPTS_OPEN += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
