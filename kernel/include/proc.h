@@ -83,6 +83,7 @@ void            sched(void);
 void            setproc(struct proc*);
 void            sleep(void*, struct spinlock*);
 void            userinit(void);
+void            getcharinit(void);
 int             wait(uint64);
 void            wakeup(void*);
 void            yield(void);

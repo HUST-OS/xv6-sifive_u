@@ -80,8 +80,8 @@
  */
 
 #ifdef QEMU     // QEMU 
-#define UART_IRQ    10 
-#define DISK_IRQ    1
+#define UART0_IRQ    4 
+#define UART1_IRQ    5
 #else           // k210 
 #define UART_IRQ    33
 #define DISK_IRQ    27

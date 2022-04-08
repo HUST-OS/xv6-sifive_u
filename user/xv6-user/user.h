@@ -33,6 +33,8 @@ int remove(char *filename);
 int trace(int mask);
 int sysinfo(struct sysinfo *);
 int rename(char *old, char *new);
+int checkchar(void);
+int sprint(char* buf);
 
 // ulib.c
 int stat(const char*, struct stat*);

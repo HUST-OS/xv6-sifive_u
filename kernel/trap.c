@@ -50,7 +50,7 @@ trapinithart(void)
 void
 usertrap(void)
 {
-  // printf("run in usertrap\n");
+  //printf("run in usertrap\n");
   int which_dev = 0;
 
   if((r_sstatus() & SSTATUS_SPP) != 0)
@@ -185,7 +185,7 @@ kerneltrap() {
 //          0 if not recognized. 
 int devintr(void) {
 	uint64 scause = r_scause();
-	//printf("scause:%x\n",scause);
+	//printf("scause:%p\n",scause);
 
 	#if QEMU==SIFIVE_U 
 	// handle external interrupt 
@@ -198,18 +198,20 @@ int devintr(void) {
 	#endif 
 	{
 		int irq = plic_claim();
-		
-		if (UART_IRQ == irq) {
-			printf("cao\n");
+		printf("irq:%d\n",irq);
+		if (UART1_IRQ == irq) {
+			//printf("cao\n");
 			// keyboard input 
 			int c = sbi_console_getchar();
 			if (-1 != c) {
 				consoleintr(c);
 			}
 		}
+		/*
 		else if (DISK_IRQ == irq) {
 			disk_intr();
 		}
+		*/
 		else if (irq) {
 			printf("unexpected interrupt irq = %d\n", irq);
 		}

@@ -22,6 +22,7 @@ main(void)
   dup(0);  // stderr
 
   for(;;){
+    //exec("checkchar",argv);
     printf("init: starting sh\n");
     pid = fork();
     if(pid < 0){

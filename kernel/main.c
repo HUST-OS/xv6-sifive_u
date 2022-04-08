@@ -40,9 +40,7 @@ main(unsigned long hartid, unsigned long dtb_pa)
     consoleinit();
     printfinit();   // init a lock for printf 
     print_logo();
-    #ifdef DEBUG
     printf("hart %d enter main()...\n", hartid);
-    #endif
     kinit();         // physical page allocator
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging
@@ -62,7 +60,9 @@ main(unsigned long hartid, unsigned long dtb_pa)
     __sync_synchronize();
    for(int i = 1; i < NCPU; i++) {
       if(hartid!=i&&booted[i]==0){
+      #ifdef DEBUG
         printf("hart %d awake hart %d\n",hartid,i);
+      #endif
       	start_hart(i, (uint64)_entry, 0);
 	
       }
@@ -76,14 +76,14 @@ main(unsigned long hartid, unsigned long dtb_pa)
     while (started == 0)
       ;
     __sync_synchronize();
-    #ifdef DEBUG
     printf("hart %d enter main()...\n", hartid);
-    #endif
 
     kvminithart();
     trapinithart();
     plicinithart();  // ask PLIC for device interrupts
   }
+ #ifdef DEBUG
   printf("hart %d scheduler...\n", hartid);
+ #endif
   scheduler();
 }

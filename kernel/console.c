@@ -174,6 +174,7 @@ consoleintr(int c)
   }
   
   release(&cons.lock);
+  return;
 }
 
 void

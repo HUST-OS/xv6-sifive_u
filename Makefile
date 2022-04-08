@@ -150,6 +150,7 @@ UPROGS=\
 	$U/_usertests\
 	$U/_strace\
 	$U/_mv\
+	$U/_checkchar\
 
 dst=/mnt
 

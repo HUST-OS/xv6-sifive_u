@@ -57,7 +57,6 @@
 // qemu puts UART registers here in physical memory.
 #define UART0 0x10000000L   // 256 MB
 #define UART0_V                  (UART0 + VIRT_OFFSET)
-#define UART0_IRQ 10
 
 // local interrupt controller, which contains the timer.
 #define CLINT                   0x02000000L
@@ -66,19 +65,18 @@
 // virtio mmio interface
 #define VIRTIO0 0x10001000
 #define VIRTIO0_V               (VIRTIO0 + VIRT_OFFSET)
-#define VIRTIO0_IRQ 1
 
 // qemu puts platform-level interrupt controller (PLIC) here.
 #define PLIC 0x0c000000L       // 192 MB
 #define PLIC_V                  (PLIC + VIRT_OFFSET)
 #define PLIC_PRIORITY (PLIC_V + 0x0)
 #define PLIC_PENDING (PLIC_V + 0x1000)
-#define PLIC_MENABLE(hart) (PLIC_V + 0x2000 + (hart)*0x100)
-#define PLIC_SENABLE(hart) (PLIC_V + 0x2080 + (hart)*0x100)
-#define PLIC_MPRIORITY(hart) (PLIC_V + 0x200000 + (hart)*0x2000)
-#define PLIC_SPRIORITY(hart) (PLIC_V + 0x201000 + (hart)*0x2000)
-#define PLIC_MCLAIM(hart) (PLIC_V + 0x200004 + (hart)*0x2000)
-#define PLIC_SCLAIM(hart) (PLIC_V + 0x201004 + (hart)*0x2000)
+#define PLIC_MENABLE(hart) (PLIC_V + 0x1f80 + (hart)*0x100)
+#define PLIC_SENABLE(hart) (PLIC_V + 0x2000 + (hart)*0x100)
+#define PLIC_MPRIORITY(hart) (PLIC_V + 0x1ff000 + (hart)*0x2000)
+#define PLIC_SPRIORITY(hart) (PLIC_V + 0x200000 + (hart)*0x2000)
+#define PLIC_MCLAIM(hart) (PLIC_V + 0x1ff004 + (hart)*0x2000)
+#define PLIC_SCLAIM(hart) (PLIC_V + 0x200004 + (hart)*0x2000)
 
 
 #define USER_STACK_BOTTOM 0xC0000000   // 3GB, user stack lower address 

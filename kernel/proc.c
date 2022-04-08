@@ -30,6 +30,9 @@ static void wakeup1(struct proc *chan);
 static void freeproc(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
+extern unsigned char checkchar[];
+extern unsigned char consoleintr[];
+extern unsigned char endcheck[];
 
 void reg_info(void) {
   printf("register info: {\n");
@@ -414,8 +417,8 @@ exit(int status)
 {
   struct proc *p = myproc();
 
-  if(p == initproc)
-    panic("init exiting");
+  //if(p == initproc)
+    //panic("init exiting");
 
   // Close all open files.
   for(int fd = 0; fd < NOFILE; fd++){

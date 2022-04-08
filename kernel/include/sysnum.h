@@ -28,5 +28,7 @@
 #define SYS_readdir     24
 #define SYS_getcwd      25
 #define SYS_rename      26
+#define SYS_checkchar   27
+#define SYS_sprint      28
 
 #endif

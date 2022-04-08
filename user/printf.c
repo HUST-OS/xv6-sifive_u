@@ -5,11 +5,23 @@
 #include <stdarg.h>
 
 static char digits[] = "0123456789ABCDEF";
-
+static char printbuf[100];
+static int  len = 0;
 static void
 putc(int fd, char c)
 {
-  write(fd, &c, 1);
+  printbuf[len++]=c;
+}
+static void
+fflush(int fd){
+	if(fd==1){
+	  printbuf[len]=0;
+	  sprint(printbuf);
+	  len=0;
+	}else{
+	  write(fd, printbuf, len);
+	  len=0;
+	}
 }
 
 static void
@@ -101,6 +113,7 @@ fprintf(int fd, const char *fmt, ...)
 
   va_start(ap, fmt);
   vprintf(fd, fmt, ap);
+  fflush(fd);
 }
 
 void
@@ -110,4 +123,5 @@ printf(const char *fmt, ...)
 
   va_start(ap, fmt);
   vprintf(1, fmt, ap);
+  fflush(1);
 }

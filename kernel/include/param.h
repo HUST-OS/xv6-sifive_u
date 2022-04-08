@@ -2,7 +2,7 @@
 #define __PARAM_H
 #define QEMU 1
 #define SIFIVE_U 1
-//#define DEBUG
+#define DEBUG
 #define NPROC        50  // maximum number of processes
 #define NCPU          5  // maximum number of CPUs
 #define NOFILE       16  // open files per process
