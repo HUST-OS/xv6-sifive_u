@@ -69,6 +69,7 @@ static struct entry_cache {
 
 static struct dirent root;
 
+
 /**
  * Read the Boot Parameter Block.
  * @return  0       if success
@@ -77,9 +78,11 @@ static struct dirent root;
 int fat32_init()
 {
     #ifdef DEBUG
-    printf("[fat32_init] enter!\n");
+    printf("[fat32_init]hart %d enter!\n",cpuid());
     #endif
     struct buf *b = bread(0, 0);
+    #ifdef DEBUG
+    #endif
     if (strncmp((char const*)(b->data + 82), "FAT32", 5))
         panic("not FAT32 volume");
     // fat.bpb.byts_per_sec = *(uint16 *)(b->data + 11);
@@ -96,7 +99,6 @@ int fat32_init()
     fat.data_clus_cnt = fat.data_sec_cnt / fat.bpb.sec_per_clus;
     fat.byts_per_clus = fat.bpb.sec_per_clus * fat.bpb.byts_per_sec;
     brelse(b);
-
     #ifdef DEBUG
     printf("[FAT32 init]byts_per_sec: %d\n", fat.bpb.byts_per_sec);
     printf("[FAT32 init]root_clus: %d\n", fat.bpb.root_clus);

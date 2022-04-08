@@ -30,13 +30,19 @@ static inline void inithartid(unsigned long hartid) {
 volatile static int started = 0;
 int booted[NCPU];
 extern char _entry[];
+extern int procfirst;
 void
 main(unsigned long hartid, unsigned long dtb_pa)
 {
   inithartid(hartid);
   booted[hartid]=1;
-  if (started == 0) {
-    started=1;
+  for(int i = 1; i < NCPU; i++) {
+      if(hartid!=i&&booted[i]==0){
+      	start_hart(i, (uint64)_entry, 0);
+      }
+  }
+
+  if (cpuid() == 1) {
     consoleinit();
     printfinit();   // init a lock for printf 
     print_logo();
@@ -58,23 +64,13 @@ main(unsigned long hartid, unsigned long dtb_pa)
     fileinit();      // file table
     userinit();      // first user process
     __sync_synchronize();
-   for(int i = 1; i < NCPU; i++) {
-      if(hartid!=i&&booted[i]==0){
-      #ifdef DEBUG
-        printf("hart %d awake hart %d\n",hartid,i);
-      #endif
-      	start_hart(i, (uint64)_entry, 0);
-	
-      }
-    }
-
+    started=1;
   }
   else
   {
     // hart 1
-
     while (started == 0)
-      ;
+    ;
     __sync_synchronize();
     printf("hart %d enter main()...\n", hartid);
 
@@ -82,6 +78,7 @@ main(unsigned long hartid, unsigned long dtb_pa)
     trapinithart();
     plicinithart();  // ask PLIC for device interrupts
   }
+
  #ifdef DEBUG
   printf("hart %d scheduler...\n", hartid);
  #endif

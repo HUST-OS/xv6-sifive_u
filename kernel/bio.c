@@ -14,7 +14,6 @@
 //     so do not keep them longer than necessary.
 
 
-
 #include "include/types.h"
 #include "include/param.h"
 #include "include/spinlock.h"
@@ -125,9 +124,9 @@ brelse(struct buf *b)
 {
   if(!holdingsleep(&b->lock))
     panic("brelse");
-
-  releasesleep(&b->lock);
-
+    
+  releasesleep(&b->lock);//?????????
+  
   acquire(&bcache.lock);
   b->refcnt--;
   if (b->refcnt == 0) {
@@ -139,7 +138,7 @@ brelse(struct buf *b)
     bcache.head.next->prev = b;
     bcache.head.next = b;
   }
-  
+
   release(&bcache.lock);
 }
 

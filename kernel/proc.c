@@ -22,6 +22,7 @@ struct proc proc[NPROC];
 struct proc *initproc;
 
 int nextpid = 1;
+int procfirst = 1;
 struct spinlock pid_lock;
 
 extern void forkret(void);
@@ -33,6 +34,7 @@ extern char trampoline[]; // trampoline.S
 extern unsigned char checkchar[];
 extern unsigned char consoleintr[];
 extern unsigned char endcheck[];
+
 
 void reg_info(void) {
   printf("register info: {\n");
@@ -619,17 +621,16 @@ void
 forkret(void)
 {
   // printf("run in forkret\n");
-  static int first = 1;
 
   // Still holding p->lock from scheduler.
   release(&myproc()->lock);
 
-  if (first) {
+  if (procfirst) {
     // File system initialization must be run in the context of a
     // regular process (e.g., because it calls sleep), and thus cannot
     // be run from main().
     // printf("[forkret]first scheduling\n");
-    first = 0;
+    procfirst = 0;
     fat32_init();
     myproc()->cwd = ename("/");
   }
@@ -685,6 +686,8 @@ wakeup(void *chan)
     }
     release(&p->lock);
   }
+
+
 }
 
 // Wake up p if it is sleeping in wait(); used by exit().

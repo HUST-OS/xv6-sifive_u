@@ -8,6 +8,9 @@
 #include "include/spinlock.h"
 #include "include/proc.h"
 #include "include/sleeplock.h"
+#include "include/printf.h"
+
+extern int fat32_init_flag;
 
 void
 initsleeplock(struct sleeplock *lk, char *name)
