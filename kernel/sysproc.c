@@ -159,18 +159,7 @@ sys_trace(void)
   return 0;
 }
 
-uint64
-sys_checkchar(void){
-  int c=-1;
-  while(c!=13){
-  	  //printf("%d\n",c);
-	  if((c=sbi_console_getchar())!=-1){
-	    printf("1\n");
-	    consoleintr(c);
-	  }
-  }
-  return 1;
-}
+
 
 uint64
 sys_sprint(void){

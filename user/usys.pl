@@ -41,5 +41,4 @@ entry("remove");
 entry("trace");
 entry("sysinfo");
 entry("rename");
-entry("checkchar");
 entry("sprint");

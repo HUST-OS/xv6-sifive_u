@@ -2,7 +2,6 @@ K=kernel
 U=user
 T=target
 OPENSBI=fw_jump.elf
-RUSTSBI=sbi-qemu
 platform=qemu
 
 OBJS = \
@@ -94,7 +93,6 @@ $K/kernel: $(OBJS) $K/kernel_app.ld $U/initcode
 	@$(LD) $(LDFLAGS) -T $K/kernel_app.ld -o $K/kernel $(OBJS)
 	@$(OBJDUMP) -S $K/kernel > $K/kernel.asm
 	@$(OBJDUMP) -t $K/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $K/kernel.sym
-	riscv64-unknown-elf-objdump -d ./kernel/kernel > ./kernel/kernel.txt
 	
 $U/initcode: $U/initcode.S
 	$(CC) $(CFLAGS) -march=rv64g -nostdinc -I. -Ikernel -c $U/initcode.S -o $U/initcode.o
@@ -150,7 +148,6 @@ UPROGS=\
 	$U/_usertests\
 	$U/_strace\
 	$U/_mv\
-	$U/_checkchar\
 
 dst=/mnt
 
@@ -190,40 +187,23 @@ endif
 
 
 ifndef M
-M = virt
+M = sifive_u
 endif
 
-QEMUOPTS_RUST = -machine $(M) -bios $(RUSTSBI) -kernel $K/kernel -smp $(CPUS) -nographic
-QEMUOPTS_RUST += -drive file=fs.img,if=none,format=raw,id=x0
-QEMUOPTS_RUST += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
-QEMUOPTS_OPEN = -machine $(M) -bios $(OPENSBI) -kernel $K/kernel -smp $(CPUS) -nographic
+QEMUOPTS = -machine $(M) -bios $(OPENSBI) -kernel $K/kernel -smp $(CPUS) -nographic
 
 ifeq ($(M), virt)
 QEMUOPTS_OPEN += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 endif
 
-qemu-o: $K/kernel fs.img
-	$(QEMU) $(QEMUOPTS_OPEN)
-
-qemu-r: $K/kernel fs.img
-	$(QEMU) $(QEMUOPTS_RUST)
+qemu: $K/kernel fs.img
+	$(QEMU) $(QEMUOPTS)
 
 .gdbinit: .gdbinit.tmpl-riscv
 	sed "s/:1234/:$(GDBPORT)/" < $^ > $@
 
-qemu-o-gdb: $K/kernel .gdbinit fs.img
+qemu-gdb: $K/kernel .gdbinit fs.img
 	@echo "*** Now run 'gdb' in another window." 1>&2
-	$(QEMU) $(QEMUOPTS_OPEN) -S $(QEMUGDB)
+	$(QEMU) $(QEMUOPTS) -S $(QEMUGDB)
 
-qemu-o-gdb-c: $K/kernel .gdbinit fs.img
-	@echo "*** Now run 'gdb' in another window." 1>&2
-	$(QEMU) $(QEMUOPTS_OPEN) $(QEMUGDB)
-
-qemu-r-gdb: $K/kernel .gdbinit fs.img
-	@echo "*** Now run 'gdb' in another window." 1>&2
-	$(QEMU) $(QEMUOPTS_RUST) -S $(QEMUGDB)
-
-qemu-r-gdb-c: $K/kernel .gdbinit fs.img
-	@echo "*** Now run 'gdb' in another window." 1>&2
-	$(QEMU) $(QEMUOPTS_RUST) $(QEMUGDB)
