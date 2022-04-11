@@ -55,11 +55,11 @@ usertrap(void)
 
   if((r_sstatus() & SSTATUS_SPP) != 0)
     panic("usertrap: not from user mode");
-
   // send interrupts and exceptions to kerneltrap(),
   // since we're now in the kernel.
   w_stvec((uint64)kernelvec);
 
+  //printf("user trap scause:%p\n",r_scause());
   struct proc *p = myproc();
   
   // save user program counter.
@@ -151,7 +151,7 @@ kerneltrap() {
   uint64 sepc = r_sepc();
   uint64 sstatus = r_sstatus();
   uint64 scause = r_scause();
-  
+  //printf("kerneltrap scause:%p\n",scause);
   if((sstatus & SSTATUS_SPP) == 0)
     panic("kerneltrap: not from supervisor mode");
   if(intr_get() != 0)
@@ -185,7 +185,7 @@ kerneltrap() {
 //          0 if not recognized. 
 int devintr(void) {
 	uint64 scause = r_scause();
-	//printf("scause:%p\n",scause);
+	//printf("devintr scause:%p\n",scause);
 
 	#if QEMU==SIFIVE_U 
 	// handle external interrupt 

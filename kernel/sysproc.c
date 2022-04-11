@@ -12,12 +12,14 @@
 #include "include/printf.h"
 #include "include/sbi2.h"
 #include "include/console.h"
+#include "include/string.h"
 
 extern int exec(char *path, char **argv);
 
 uint64
 sys_exec(void)
 {
+
   char path[FAT32_MAX_PATH], *argv[MAXARG];
   int i;
   uint64 uargv, uarg;
@@ -159,9 +161,10 @@ sys_trace(void)
 
 uint64
 sys_checkchar(void){
-  int c;
-  while(1){
-	  if((c=sbi2_console_getchar())!=-1){
+  int c=-1;
+  while(c!=13){
+  	  //printf("%d\n",c);
+	  if((c=sbi_console_getchar())!=-1){
 	    printf("1\n");
 	    consoleintr(c);
 	  }

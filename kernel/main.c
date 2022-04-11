@@ -29,6 +29,7 @@ static inline void inithartid(unsigned long hartid) {
 
 volatile static int started = 0;
 int booted[NCPU];
+int chao=0;
 extern char _entry[];
 extern int procfirst;
 void

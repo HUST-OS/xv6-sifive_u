@@ -37,6 +37,7 @@ struct {
 void
 binit(void)
 {
+/*
   struct buf *b;
 
   initlock(&bcache.lock, "bcache");
@@ -54,6 +55,7 @@ binit(void)
     bcache.head.next->prev = b;
     bcache.head.next = b;
   }
+*/
   #ifdef DEBUG
   printf("binit\n");
   #endif
@@ -62,6 +64,8 @@ binit(void)
 // Look through buffer cache for block on device dev.
 // If not found, allocate a buffer.
 // In either case, return locked buffer.
+extern int utr;
+/*
 static struct buf*
 bget(uint dev, uint sectorno)
 {
@@ -71,12 +75,14 @@ bget(uint dev, uint sectorno)
 
   // Is the block already cached?
   for(b = bcache.head.next; b != &bcache.head; b = b->next){
+
     if(b->dev == dev && b->sectorno == sectorno){
       b->refcnt++;
       release(&bcache.lock);
       acquiresleep(&b->lock);
       return b;
     }
+
   }
 
   // Not cached.
@@ -94,26 +100,33 @@ bget(uint dev, uint sectorno)
   }
   panic("bget: no buffers");
 }
-
+*/
 // Return a locked buf with the contents of the indicated block.
 struct buf* 
 bread(uint dev, uint sectorno) {
   struct buf *b;
-
+  b=bcache.buf;
+  b->valid = 1;
+  b->dev=dev;
+  b->sectorno=sectorno;
+/*
   b = bget(dev, sectorno);
   if (!b->valid) {
     disk_read(b);
     b->valid = 1;
   }
-
+*/
+  disk_read(b);
   return b;
 }
 
 // Write b's contents to disk.  Must be locked.
 void 
 bwrite(struct buf *b) {
+/*
   if(!holdingsleep(&b->lock))
     panic("bwrite");
+*/
   disk_write(b);
 }
 
@@ -122,11 +135,11 @@ bwrite(struct buf *b) {
 void
 brelse(struct buf *b)
 {
+  /*
   if(!holdingsleep(&b->lock))
     panic("brelse");
     
   releasesleep(&b->lock);//?????????
-  
   acquire(&bcache.lock);
   b->refcnt--;
   if (b->refcnt == 0) {
@@ -140,6 +153,7 @@ brelse(struct buf *b)
   }
 
   release(&bcache.lock);
+  */
 }
 
 void

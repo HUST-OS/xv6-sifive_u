@@ -22,7 +22,6 @@ main(void)
   dup(0);  // stderr
 
   for(;;){
-    //exec("checkchar",argv);
     printf("init: starting sh\n");
     pid = fork();
     if(pid < 0){
@@ -30,7 +29,7 @@ main(void)
       exit(1);
     }
     if(pid == 0){
-      exec("sh", argv);
+      exec("sh",argv);
       printf("init: exec sh failed\n");
       exit(1);
     }

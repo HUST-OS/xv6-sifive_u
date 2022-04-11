@@ -162,7 +162,7 @@ runcmd(struct cmd *cmd)
   struct listcmd *lcmd;
   struct pipecmd *pcmd;
   struct redircmd *rcmd;
-
+  
   if(cmd == 0)
     exit(1);
 
@@ -279,6 +279,7 @@ main(void)
   getcwd(mycwd);
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
+    
     replace(buf);
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
@@ -290,7 +291,6 @@ main(void)
     else{
       struct cmd *cmd = parsecmd(buf);
       struct execcmd *ecmd;
-
       ecmd = (struct execcmd*)cmd;
       if(ecmd->argv[0] == 0) {
         free(cmd);
@@ -307,7 +307,9 @@ main(void)
         continue;
       }
       else if(fork1() == 0) 
+      {
         runcmd(cmd);
+      }
       wait(0);
       free(cmd);
     }

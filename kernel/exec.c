@@ -40,7 +40,8 @@ loadseg(pagetable_t pagetable, uint64 va, struct dirent *ep, uint offset, uint s
   return 0;
 }
 
-
+int utr=0;
+extern char fs_img_end[];
 int exec(char *path, char **argv)
 {
   char *s, *last;
@@ -59,9 +60,11 @@ int exec(char *path, char **argv)
     return -1;
   }
   memmove(kpagetable, p->kpagetable, PGSIZE);
+
   for (int i = 0; i < PX(2, MAXUVA); i++) {
     kpagetable[i] = 0;
   }
+
 
   if((ep = ename(path)) == NULL) {
     #ifdef DEBUG
@@ -69,8 +72,8 @@ int exec(char *path, char **argv)
     #endif
     goto bad;
   }
-  elock(ep);
 
+  elock(ep);
   // Check ELF header
   if(eread(ep, 0, (uint64) &elf, 0, sizeof(elf)) != sizeof(elf))
     goto bad;
@@ -101,7 +104,7 @@ int exec(char *path, char **argv)
   eunlock(ep);
   eput(ep);
   ep = 0;
-
+  
   p = myproc();
   uint64 oldsz = p->sz;
 
@@ -167,6 +170,7 @@ int exec(char *path, char **argv)
   #ifdef DEBUG
   printf("[exec] reach bad\n");
   #endif
+  
   if(pagetable)
     proc_freepagetable(pagetable, sz);
   if(kpagetable)

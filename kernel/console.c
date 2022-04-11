@@ -20,6 +20,8 @@
 #include "include/riscv.h"
 #include "include/proc.h"
 #include "include/sbi.h"
+#include "include/console.h"
+#include "include/printf.h"
 
 #define BACKSPACE 0x100
 #define C(x)  ((x)-'@')  // Control-x
@@ -65,6 +67,15 @@ consolewrite(int user_src, uint64 src, int n)
   return i;
 }
 
+int 
+isBlank(){
+  int result;
+  acquire(&cons.lock);
+  result=cons.r==cons.w;
+  release(&cons.lock);
+  return result;
+}
+
 //
 // user read()s from the console go here.
 // copy (up to) a whole input line to dst.
@@ -75,14 +86,20 @@ int
 consoleread(int user_dst, uint64 dst, int n)
 {
   uint target;
-  int c;
+  int c=-1;
   char cbuf;
-
   target = n;
+  while(isBlank()){
+    while(c!=13){
+      while((c=sbi_console_getchar())==-1);
+      consoleintr(c);
+    }
+  }  
   acquire(&cons.lock);
   while(n > 0){
     // wait until interrupt handler has put some
     // input into cons.buffer.
+    
     while(cons.r == cons.w){
       if(myproc()->killed){
         release(&cons.lock);
@@ -90,7 +107,6 @@ consoleread(int user_dst, uint64 dst, int n)
       }
       sleep(&cons.r, &cons.lock);
     }
-
     c = cons.buf[cons.r++ % INPUT_BUF];
 
     if(c == C('D')){  // end-of-file
@@ -117,7 +133,6 @@ consoleread(int user_dst, uint64 dst, int n)
     }
   }
   release(&cons.lock);
-
   return target - n;
 }
 
@@ -167,7 +182,7 @@ consoleintr(int c)
         // wake up consoleread() if a whole line (or end-of-file)
         // has arrived.
         cons.w = cons.e;
-        wakeup(&cons.r);
+        //wakeup(&cons.r);
       }
     }
     break;

@@ -2,7 +2,7 @@
     .globl _entry
 _entry:
     add t0, a0, 1
-    slli t0, t0, 14
+    slli t0, t0, 15
     la sp, boot_stack
     add sp, sp, t0
     call main
@@ -16,6 +16,6 @@ loop:
     .align 12
     .globl boot_stack
 boot_stack:
-    .space 4096 * 4 * 4
+    .space 4096 * 4 * 8
     .globl boot_stack_top
 boot_stack_top:

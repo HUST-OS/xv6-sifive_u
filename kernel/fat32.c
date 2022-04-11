@@ -256,6 +256,7 @@ static uint rw_clus(uint32 cluster, int write, int user, uint64 data, uint off, 
         if (n - tot < m) {
             m = n - tot;
         }
+        
         if (write) {
             if ((bad = either_copyin(bp->data + (off % BSIZE), user, data, m)) != -1) {
                 bwrite(bp);
@@ -590,11 +591,12 @@ struct dirent *ealloc(struct dirent *dp, char *name, int attr)
 
 struct dirent *edup(struct dirent *entry)
 {
+
     if (entry != 0) {
         acquire(&ecache.lock);
         entry->ref++;
         release(&ecache.lock);
-    }
+    }    
     return entry;
 }
 
@@ -782,8 +784,9 @@ int enext(struct dirent *dp, struct dirent *ep, uint off, int *count)
     union dentry de;
     int cnt = 0;
     memset(ep->filename, 0, FAT32_MAX_FILENAME + 1);
+
     for (int off2; (off2 = reloc_clus(dp, off, 0)) != -1; off += 32) {
-        if (rw_clus(dp->cur_clus, 0, 0, (uint64)&de, off2, 32) != 32 || de.lne.order == END_OF_ENTRY) {
+        if (rw_clus(dp->cur_clus, 0, 0, (uint64)&de, off2, 32) != 32 || de.lne.order == END_OF_ENTRY) {//?????
             return -1;
         }
         if (de.lne.order == EMPTY_ENTRY) {
@@ -809,6 +812,7 @@ int enext(struct dirent *dp, struct dirent *ep, uint off, int *count)
             return 1;
         }
     }
+
     return -1;
 }
 
@@ -822,6 +826,7 @@ int enext(struct dirent *dp, struct dirent *ep, uint off, int *count)
  */
 struct dirent *dirlookup(struct dirent *dp, char *filename, uint *poff)
 {
+    
     if (!(dp->attribute & ATTR_DIRECTORY))
         panic("dirlookup not DIR");
     if (strncmp(filename, ".", FAT32_MAX_FILENAME) == 0) {
@@ -844,7 +849,8 @@ struct dirent *dirlookup(struct dirent *dp, char *filename, uint *poff)
     int type;
     uint off = 0;
     reloc_clus(dp, 0, 0);
-    while ((type = enext(dp, ep, off, &count) != -1)) {
+
+    while ((type = enext(dp, ep, off, &count) != -1)) {//?????
         if (type == 0) {
             if (poff && count >= entcnt) {
                 *poff = off;
@@ -871,10 +877,14 @@ static char *skipelem(char *path, char *name)
         path++;
     }
     if (*path == 0) { return NULL; }
+    
     char *s = path;
+    
+
     while (*path != '/' && *path != 0) {
         path++;
     }
+    
     int len = path - s;
     if (len > FAT32_MAX_FILENAME) {
         len = FAT32_MAX_FILENAME;
@@ -886,11 +896,12 @@ static char *skipelem(char *path, char *name)
     }
     return path;
 }
-
 // FAT32 version of namex in xv6's original file system.
 static struct dirent *lookup_path(char *path, int parent, char *name)
 {
     struct dirent *entry, *next;
+    
+    
     if (*path == '/') {
         entry = edup(&root);
     } else if (*path != '\0') {
@@ -898,6 +909,7 @@ static struct dirent *lookup_path(char *path, int parent, char *name)
     } else {
         return NULL;
     }
+
     while ((path = skipelem(path, name)) != 0) {
         elock(entry);
         if (!(entry->attribute & ATTR_DIRECTORY)) {
@@ -905,11 +917,12 @@ static struct dirent *lookup_path(char *path, int parent, char *name)
             eput(entry);
             return NULL;
         }
+
         if (parent && *path == '\0') {
             eunlock(entry);
             return entry;
         }
-        if ((next = dirlookup(entry, name, 0)) == 0) {
+        if ((next = dirlookup(entry, name, 0)) == 0) {//?????
             eunlock(entry);
             eput(entry);
             return NULL;

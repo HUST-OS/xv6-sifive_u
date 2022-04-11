@@ -16,6 +16,11 @@ pagetable_t kernel_pagetable;
 
 extern char etext[];  // kernel.ld sets this to end of kernel code.
 extern char trampoline[]; // trampoline.S
+extern char fs_img_start[];
+extern char fs_img_end[];
+const uint64 FAT32_START=(uint64)fs_img_start;
+const uint64 FAT32_END=(uint64)fs_img_end;
+const uint64 FAT32_START_V=FAT32_START;
 /*
  * create a direct-map page table for the kernel.
  */
@@ -26,7 +31,11 @@ kvminit()
   // printf("kernel_pagetable: %p\n", kernel_pagetable);
 
   memset(kernel_pagetable, 0, PGSIZE);
-
+  
+  //uint64 FAT32_SIZE=(FAT32_END-FAT32_START+PGSIZE-1)/PGSIZE*PGSIZE;
+  //printf("fat32end:%p\n",FAT32_END);
+  // file system
+  //kvmmap(FAT32_START_V, FAT32_START, FAT32_SIZE, PTE_R | PTE_W);
   // uart registers
   kvmmap(UART0_V, UART0, PGSIZE, PTE_R | PTE_W);
   
