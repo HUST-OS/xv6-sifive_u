@@ -1,37 +1,27 @@
-# xv6-sifive_u
+1. # xv6-sifive_u
 
-#### 介绍
-xv6在qemu的ifive_u上的移植
+   xv6移植到qemu的sifive_u上
 
-#### 软件架构
-软件架构说明
+   ## 使用方法
 
+   ```
+   git clone https://github.com/HUST-OS/xv6-sifive_u.git
+   cd ?
+   ```
 
-#### 安装教程
+   然后您可以在qemu上进行运行:
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+   ```
+   make qemu
+   ```
 
-#### 使用说明
+   ## 我们的工作
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+   - 调试操作系统启动的引导程序,使得操作系统多核启动能够顺利执行.
+   - 调试UART机器和对应的控制台输入输出函数,使得操作系统能够正常进行键盘输入.
+   - 调试底层文件系统接口,使用RAM来模拟磁盘.
+   - 调试FAT32文件系统,为用户程序提供稳定的文件操作接口.
 
-#### 参与贡献
+   ## 可用分支
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+   `main`分支:操作系统stable版本https://gitee.com/gitee-stars/)https://gitee.com/gitee-stars/)
