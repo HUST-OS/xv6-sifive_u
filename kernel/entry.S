@@ -10,8 +10,6 @@ _entry:
 loop:
     j loop
     
-
-
     .section .bss.stack
     .align 12
     .globl boot_stack
