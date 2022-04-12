@@ -25,3 +25,5 @@ make qemu
 ## 可用分支
 
 `main`分支:操作系统stable版本
+
+观看代码,请查看master分支
