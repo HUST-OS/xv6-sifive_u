@@ -8,7 +8,7 @@ Get the code from GitHub:
 
 ```
 git clone https://github.com/HUST-OS/xv6-sifive_u.git
-cd ?
+cd xv6-sifive_u
 ```
 
 Run with QEMU:
