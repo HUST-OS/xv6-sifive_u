@@ -6,9 +6,9 @@ xv6移植到qemu的sifive_u上
 
 ```
 git clone https://github.com/HUST-OS/xv6-sifive_u.git
-cd ?
+cd xv6-sifive_u
 ```
-
+Cancel changes
 然后您可以在qemu上进行运行:
 
 ```
